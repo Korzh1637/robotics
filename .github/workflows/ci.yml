@@ -1,4 +1,4 @@
-name: PR01 — проверка отчёта
+name: PR01
 
 on: [push, pull_request]
 
