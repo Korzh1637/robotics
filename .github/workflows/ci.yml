@@ -1,4 +1,4 @@
-name: PR01
+name: PR02
 
 on: [push, pull_request]
 
@@ -25,16 +25,16 @@ jobs:
       - name: Проверить JSON и совпадение версии архива
         shell: bash
         run: |
-          python3 -m json.tool evidence/pr01/environment.json > /dev/null
-          python3 -m json.tool evidence/pr01/report.json > /dev/null
+          python3 -m json.tool evidence/pr02/environment.json > /dev/null
+          python3 -m json.tool evidence/pr02/report.json > /dev/null
           python3 - <<'PYTHON'
           import json
           import os
           from pathlib import Path
-          report = json.loads(Path('evidence/pr01/report.json').read_text())
+          report = json.loads(Path('evidence/pr02/report.json').read_text())
           if report['course_kit']['archive_sha256'] != os.environ['COURSE_KIT_SHA256']:
               raise SystemExit('SHA-256 комплекта в отчёте отличается от архива CI')
           PYTHON
       - name: Проверить комплектность evidence и коммит реализации
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+        run: python3 .course-kit/v1/tools/check_practice.py PR02 --submission .
