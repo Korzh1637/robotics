@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR03",
+  "commit": "a7ced39570675c464025bca28fe89bc0df151b28",
+  "course_kit": {
+    "version": "v1-w03",
+    "archive_sha256": "fec6b4e886c19146078bf69fbf90a19279a4cd33f656642395350b299efeb226"
+  },
+  "commands": [
+    "colcon build --symlink-install --packages-select turtle_bringup patrol",
+    "source install/setup.bash",
+    "python3 -m pytest -q src/patrol/test scripts/test_check_pr03.py",
+    "QT_QPA_PLATFORM=offscreen python3 scripts/check_pr03.py",
+    "ros2 run patrol patrol",
+    "ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel",
+    "ros2 topic hz /turtle1/cmd_vel"
+  ],
+  "tests": [
+    {
+      "name": "4 tests: pure command selection and real ROS callbacks/timer",
+      "status": "passed",
+      "evidence": "tests.txt"
+    },
+    {
+      "name": "turtle_bringup regression: 4 passed, 1 generated copyright skip",
+      "status": "passed",
+      "evidence": "tests.txt"
+    },
+    {
+      "name": "Real turtlesim: zero before Pose, wrong name, remap, 10-second frequency, motion and SIGINT/watchdog",
+      "status": "passed",
+      "evidence": "tests.txt, demo.md"
+    },
+    {
+      "name": "5 CI regressions: delayed real ROS discovery, partial graph, syntax/runtime errors and missing-topic deadline",
+      "status": "passed",
+      "evidence": "tests.txt"
+    }
+  ],
+  "defect": {
+    "reproducer": "ros2 run patrol patrol: /cmd_vel has 1 publisher, 0 subscribers; turtle pose unchanged.",
+    "root_cause": "Relative cmd_vel resolves to /cmd_vel, different from turtlesim subscription /turtle1/cmd_vel.",
+    "proof_after": "Only remap changed to cmd_vel:=/turtle1/cmd_vel: 100 messages in 10.016 seconds, 10.000 Hz, Twist=(0.5,0.3), pose changed. SIGINT removes publisher; watchdog stops turtle. Latest local run: 2026-09-27."
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true
+  },
+  "time": {
+    "contact_academic_hours": 1.5,
+    "self_study_hours": 2
+  },
+  "ai_used": false
+}
