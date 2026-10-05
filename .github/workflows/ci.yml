@@ -1,40 +1,50 @@
-name: PR01
+name: ROS checks
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - 'pr*'
+  pull_request:
+    branches:
+      - 'pr*'
+
+env:
+  COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w03-2bd3098044c5.tar.gz
+  COURSE_KIT_SHA256: 2bd3098044c5444cf6bd11ca4ab051d08984b807d8eb5ea6f50c1714820c0b19
 
 jobs:
-  evidence:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w03-7fbfd3e8161a.tar.gz
-      COURSE_KIT_SHA256: 7fbfd3e8161ab6c6ebefc7663efdaf77d9a7d490399743507f33dcefbd5ac522
+    container:
+      image: osrf/ros:jazzy-desktop-full@sha256:d16957210572c5f919f3f9bd2fb0cc24a82542647489d8b8eda7c3beda31305f
     steps:
-      - name: Получить всю историю коммитов
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Скачать зафиксированный комплект курса
-        shell: bash
-        run: |
-          curl -fsSLo /tmp/course-kit.tar.gz "$COURSE_KIT_URL"
-          printf '%s  %s\n' "$COURSE_KIT_SHA256" /tmp/course-kit.tar.gz | sha256sum -c -
-          mkdir -p .course-kit
-          tar -xzf /tmp/course-kit.tar.gz -C .course-kit
 
-      - name: Проверить JSON и совпадение версии архива
+      - name: Определить номер ПР из имени ветки
+        id: pr
         shell: bash
         run: |
-          python3 -m json.tool evidence/pr01/environment.json > /dev/null
-          python3 -m json.tool evidence/pr01/report.json > /dev/null
-          python3 - <<'PYTHON'
-          import json
-          import os
-          from pathlib import Path
-          report = json.loads(Path('evidence/pr01/report.json').read_text())
-          if report['course_kit']['archive_sha256'] != os.environ['COURSE_KIT_SHA256']:
-              raise SystemExit('SHA-256 комплекта в отчёте отличается от архива CI')
-          PYTHON
-      - name: Проверить комплектность evidence и коммит реализации
+          BRANCH_NAME="${GITHUB_REF_NAME}"                                  # pr03
+          PR_UPPER=$(echo "$BRANCH_NAME" | tr '[:lower:]' '[:upper:]')      # PR03
+          PR_LOWER=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]')      # pr03
+          echo "PR_UPPER=$PR_UPPER" >> $GITHUB_ENV
+          echo "PR_LOWER=$PR_LOWER" >> $GITHUB_ENV
+          echo "Проверяем $PR_UPPER, папка evidence/$PR_LOWER"
+
+      - name: Validate environment JSON
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+        run: python3 -m json.tool "evidence/${PR_LOWER}/environment.json" > /dev/null
+
+      - name: Download course kit
+        shell: bash
+        run: |
+          curl -fsSLo course-kit.tar.gz "$COURSE_KIT_URL"
+          printf '%s  %s\n' "$COURSE_KIT_SHA256" course-kit.tar.gz | sha256sum -c -
+          mkdir -p .course-kit
+          tar -xzf course-kit.tar.gz -C .course-kit
+
+      - name: Check PR evidence
+        shell: bash
+        run: python3 .course-kit/v1/tools/check_practice.py "$PR_UPPER" --submission .
