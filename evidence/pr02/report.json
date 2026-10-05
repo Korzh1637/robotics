@@ -3,8 +3,8 @@
   "practice_id": "PR02",
   "commit": "3605debb0f74400565d0a8482bcdb3bc3a1115fa",
   "course_kit": {
-    "version": "v1-w05",
-    "archive_sha256": "bca214e3de6f90f9513049dfa0f36fee65ad834da502dc3f3f8fb443517b5197"
+    "version": "v1-w02",
+    "archive_sha256": "5d210c431e32418f45e2cffa9dd2028116c7a9520a36f3c7079c778cd73437a8"
   },
   "commands": [
     "ros2 pkg create --build-type ament_python --license Apache-2.0 turtle_bringup --dependencies launch launch_ros turtlesim",
