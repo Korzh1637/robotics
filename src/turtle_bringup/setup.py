@@ -1,6 +1,6 @@
-from setuptools import find_packages, setup
-# Фрагмент setup.py: импорт вверху файла
 from glob import glob
+
+from setuptools import find_packages, setup
 
 package_name = 'turtle_bringup'
 
@@ -10,10 +10,10 @@ setup(
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+         ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', 
-            glob('launch/*.launch.py')),
+        ('share/' + package_name + '/launch',
+         glob('launch/*.launch.py')),
     ],
     package_data={'': ['py.typed']},
     install_requires=['setuptools'],
@@ -29,5 +29,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-        ],},
+        ],
+    },
 )
