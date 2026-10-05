@@ -5,3 +5,10 @@ course-kit.tar.gz
 build/
 install/
 log/
+.kilo/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+.pytest_cache/
+*.egg-info/
