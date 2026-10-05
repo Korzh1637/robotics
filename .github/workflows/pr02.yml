@@ -10,8 +10,8 @@ jobs:
       image: osrf/ros:lyrical-desktop-full@sha256:e6b1cb530b65588279681db53784e264ce5cf83f2cc33e689d27d6024d7f3ebe
       options: --user 0
     env:
-      COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w02-5d210c431e32.tar.gz
-      COURSE_KIT_SHA256: 5d210c431e32418f45e2cffa9dd2028116c7a9520a36f3c7079c778cd73437a8
+      COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w05-bca214e3de6f.tar.gz
+      COURSE_KIT_SHA256: bca214e3de6f90f9513049dfa0f36fee65ad834da502dc3f3f8fb443517b5197
     steps:
       # GitVerse запускает JavaScript actions через node внутри job-контейнера.
       # ROS-образ не содержит Node; он нужен и для main, и для post checkout.
@@ -51,7 +51,7 @@ jobs:
           import os
           from pathlib import Path
           report = json.loads(Path('evidence/pr02/report.json').read_text())
-          assert report['course_kit']['version'] == 'v1-w02'
+          assert report['course_kit']['version'] == 'v1-w05'
           assert report['course_kit']['archive_sha256'] == os.environ['COURSE_KIT_SHA256']
           PYTHON
           python3 .course-kit/pr02/v1/tools/check_practice.py PR02 --submission .
