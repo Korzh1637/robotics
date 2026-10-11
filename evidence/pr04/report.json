@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR04",
+  "commit": "6c6e6ca0c8ccd748b6987f00155f549e0c53ef23",
+  "course_kit": {
+    "version": "v1-w05",
+    "archive_sha256": "bca214e3de6f90f9513049dfa0f36fee65ad834da502dc3f3f8fb443517b5197"
+  },
+      "commands": [
+        "colcon build --symlink-install --packages-select patrol",
+        "ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel",
+        "ros2 param list /patrol",
+        "ros2 param get /patrol publish_hz",
+        "ros2 param set /patrol publish_hz 5.0",
+        "ros2 topic hz /turtle1/cmd_vel --window 20",
+        "ros2 param set /patrol publish_hz 0.0",
+        "ros2 param get /patrol publish_hz",
+        "ros2 param set /patrol linear_speed -0.5",
+        "cd src/patrol && python3 -m pytest test"
+      ],
+      "tests": [
+        {"name": "test_validate_params[0.5-0.3-10.0-True]", "status": "passed"},
+        {"name": "test_validate_params[0.5-0.3-0.0-False]", "status": "passed"},
+        {"name": "test_validate_params[nan-0.3-10.0-False]", "status": "passed"},
+        {"name": "test_zero_hz_reason", "status": "passed"},
+        {"name": "test_choose_command_no_pose", "status": "passed"},
+        {"name": "test_choose_command_with_pose", "status": "passed"},
+        {"name": "test_choose_command_respects_parameters", "status": "passed"}
+      ],
+      "defect": {
+        "reproducer": "В validate_params временно закомментирован блок проверки publish_hz. Запуск ноды: ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel. Попытка установить недопустимое значение: ros2 param set /patrol publish_hz 0.0. Команда ros2 param set зависает, а нода patrol падает с ZeroDivisionError при вызове create_timer(1.0 / 0.0).",
+        "root_cause": "Без валидации параметра publish_hz значение 0.0 проходит через колбэк _on_set_parameters и используется в выражении 1.0 / self._publish_hz при пересоздании таймера. Деление на ноль вызывает исключение, которое уничтожает ноду. Активное состояние (подписка, издатель, последняя поза) теряется.",
+        "proof_after": "После восстановления проверки: ros2 param set /patrol publish_hz 0.0 возвращает 'Setting parameters failed: publish_hz 0.0 out of [1, 30]', нода продолжает работать, старое значение сохраняется (ros2 param get /patrol publish_hz возвращает 5.0). ros2 param set /patrol publish_hz 5.0 успешно пересоздаёт таймер, что подтверждается ros2 topic hz /turtle1/cmd_vel (~5 Hz). Ноль, отрицательные значения и NaN отклоняются как в рантайме через ros2 param set, так и в тестах чистой функции validate_params."
+      },
+      "claims": {
+        "public_tests_passed": true,
+        "defect_reproduced": true,
+        "defect_fixed": true
+      },
+      "time": {
+        "contact_academic_hours": 1.5,
+        "self_study_hours": 2
+      },
+      "ai_used": true
+    }
