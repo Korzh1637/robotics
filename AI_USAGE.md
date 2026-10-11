@@ -22,6 +22,6 @@
 - Использован ИИ: да (`ai_used: true` в отчёте этой ПР).
 - Модель и версия: Qwen3.7-Plus
 - Среда или интерфейс агента: чат в веб-интерфейсе
-- Затронутые компоненты: `src/patrol/patrol/patrol.py`, `src/patrol/patrol/control.py`, `src/patrol/test/test_patrol.py`,
+- Затронутые компоненты: `src/patrol/patrol/patrol.py`, `src/patrol/patrol/control.py`, `src/patrol/test/test_patrol.py`
 - Характер помощи: помощь в написании, стандартизация кода
 - Как результат был проверен независимо: выполнение задания и проверка текста
