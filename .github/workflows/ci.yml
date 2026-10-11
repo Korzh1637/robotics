@@ -30,13 +30,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Собрать пакеты, запустить тесты и опыт ПР04
-        shell: bash
-        run: |
-          source /opt/ros/lyrical/setup.bash
-          colcon build --symlink-install --packages-select turtle_bringup patrol
-          source install/setup.bash
-          python3 .course-kit/v1/tools/check_practice.py PR04 --submission .
       - name: Скачать зафиксированный комплект курса
         shell: bash
         run: |
@@ -44,6 +37,13 @@ jobs:
           printf '%s  %s\n' "$COURSE_KIT_SHA256" course-kit.tar.gz | sha256sum -c -
           mkdir -p .course-kit/pr04
           tar -xzf course-kit.tar.gz -C .course-kit/pr04
+      - name: Собрать пакеты, запустить тесты и опыт ПР04
+        shell: bash
+        run: |
+          source /opt/ros/lyrical/setup.bash
+          colcon build --symlink-install --packages-select turtle_bringup patrol
+          source install/setup.bash
+          python3 .course-kit/v1/tools/check_practice.py PR04 --submission .
       - name: Проверить версию архива и контракт evidence
         shell: bash
         run: |
