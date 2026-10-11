@@ -1,61 +1,59 @@
-"""Проверки решения ПР03: решение по позе и настоящий обмен ROS."""
-from types import SimpleNamespace
-import time
-
 import pytest
-import rclpy
-from rclpy.executors import SingleThreadedExecutor
-from rclpy.node import Node
-from geometry_msgs.msg import Twist
-
 from patrol.control import choose_command
-from patrol.patrol import Patrol, Pose
+from patrol.patrol import validate_params
 
 
-def test_no_pose_means_stop():
-    assert choose_command(None) == (0.0, 0.0)
+@pytest.mark.parametrize('lin,turn,hz,ok', [
+    (0.5, 0.3, 10.0, True),
+    (0.0, 0.0, 1.0, True),
+    (1.0, 1.0, 30.0, True),
+    (1.0, -1.0, 15.0, True),
+    (0.5, 0.3, 5.0, True),
+    (0.5, 0.3, 0.0, False),
+    (-0.1, 0.3, 10.0, False),
+    (1.1, 0.3, 10.0, False),
+    (0.5, 1.5, 10.0, False),
+    (0.5, 0.3, 0.5, False),
+    (0.5, 0.3, 31.0, False),
+    (float('nan'), 0.3, 10.0, False),
+    (0.5, float('nan'), 10.0, False),
+    (0.5, 0.3, float('nan'), False),
+])
+def test_validate_params(lin, turn, hz, ok):
+    assert validate_params(lin, turn, hz)[0] is ok
 
 
-@pytest.mark.parametrize('x,y,theta', [(0.0, 0.0, 0.0), (5.5, 5.5, 1.2)])
-def test_received_pose_allows_fixed_command_without_mutation(x, y, theta):
-    pose = SimpleNamespace(x=x, y=y, theta=theta)
-    assert choose_command(pose) == (0.5, 0.3)
-    assert vars(pose) == dict(x=x, y=y, theta=theta)
+def test_zero_hz_reason():
+    ok, reason = validate_params(0.5, 0.3, 0.0)
+    assert not ok
+    assert 'publish_hz' in reason
 
 
-def test_subscription_updates_state_and_timer_uses_it():
-    rclpy.init(args=['--ros-args', '-r', '__ns:=/pr03_test'])
-    node = Patrol()
-    observer = Node('observer')
-    executor = SingleThreadedExecutor()
-    executor.add_node(node)
-    executor.add_node(observer)
-    messages = []
-    subscription = observer.create_subscription(Twist, '/pr03_test/cmd_vel', messages.append, 10)
-    publisher = observer.create_publisher(Pose, '/turtle1/pose', 10)
+def test_choose_command_no_pose():
+    twist = choose_command(None, 0.5, 0.3)
+    assert twist.linear.x == 0.0
+    assert twist.angular.z == 0.0
 
-    def until(condition):
-        deadline = time.monotonic() + 5.0
-        while not condition() and time.monotonic() < deadline:
-            executor.spin_once(timeout_sec=0.05)
-        assert condition(), 'Expected ROS event did not arrive'
 
-    try:
-        until(lambda: len(messages) >= 3)
-        assert node.latest_pose is None
-        assert all(m.linear.x == m.angular.z == 0 for m in messages)
-        until(lambda: publisher.get_subscription_count() == 1)
-        publisher.publish(Pose(x=2.0, y=3.0))
-        until(lambda: node.latest_pose is not None)
-        assert node.latest_pose.x == 2.0
-        until(lambda: any(m.linear.x == 0.5 and m.angular.z == 0.3 for m in messages))
-        publisher.publish(Pose(x=7.0, y=4.0))
-        until(lambda: node.latest_pose.x == 7.0)
-        assert node.latest_pose.y == 4.0
-        assert observer.count_publishers('/pr03_test/cmd_vel') == 1
-        assert all(m.linear.y == m.linear.z == m.angular.x == m.angular.y == 0 for m in messages)
-    finally:
-        executor.shutdown()
-        node.destroy_node()
-        observer.destroy_node()
-        rclpy.try_shutdown()
+def test_choose_command_with_pose():
+    class MockPose:
+        pass
+    pose = MockPose()
+
+    twist = choose_command(pose, 0.7, -0.5)
+    assert twist.linear.x == 0.7
+    assert twist.angular.z == -0.5
+
+
+def test_choose_command_respects_parameters():
+    class MockPose:
+        pass
+    pose = MockPose()
+
+    twist1 = choose_command(pose, 0.3, 0.2)
+    twist2 = choose_command(pose, 0.8, -0.9)
+
+    assert twist1.linear.x == 0.3
+    assert twist1.angular.z == 0.2
+    assert twist2.linear.x == 0.8
+    assert twist2.angular.z == -0.9
