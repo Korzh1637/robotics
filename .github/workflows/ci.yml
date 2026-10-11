@@ -43,7 +43,7 @@ jobs:
           source /opt/ros/lyrical/setup.bash
           colcon build --symlink-install --packages-select turtle_bringup patrol
           source install/setup.bash
-          python3 .course-kit/v1/tools/check_practice.py PR04 --submission .
+          python3 .course-kit/pr04/v1/tools/check_practice.py PR04 --submission .
       - name: Проверить версию архива и контракт evidence
         shell: bash
         run: |
