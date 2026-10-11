@@ -10,7 +10,7 @@ from .control import choose_command
 
 
 def validate_params(linear_speed, turn_rate, publish_hz):
-    """Чистая функция валидации. Возвращает (ok, reason)."""
+    """Чистая функция валидации. Возвращает (ok, reason)"""
     for name, val in [('linear_speed', linear_speed),
                         ('turn_rate', turn_rate),
                         ('publish_hz', publish_hz)]:

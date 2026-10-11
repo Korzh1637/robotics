@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   practice:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     container:
       image: osrf/ros@sha256:e6b1cb530b65588279681db53784e264ce5cf83f2cc33e689d27d6024d7f3ebe
       options: --user 0
