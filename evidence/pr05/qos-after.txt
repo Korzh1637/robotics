@@ -1,0 +1,15 @@
+WARNING: topic [/robot_a/sensor_pose] does not appear to be published yet
+
+Files:             0_bag_2026_10_22-14_12_32.mcap
+Bag size:          37.1 KiB
+Storage id:        mcap
+ROS Distro:        lyrical
+Duration:          7.457390666s
+Start:             Oct 22 2026 14:12:35.938860819 (1792678355.938860819)
+End:               Oct 22 2026 14:12:43.396251485 (1792678363.396251485)
+Messages:          467
+Topic information: Topic: /robot_a/sensor_pose | Type: turtlesim_msgs/msg/Pose | Count: 467 | Serialization Format: cdr
+Services:          0
+Service information: 
+Actions:           0
+Action information: 

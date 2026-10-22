@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR05",
+  "commit": "4b74191c552e89e3382ddf4e9cc637a23398796c",
+  "course_kit": {
+    "version": "v1-w07",
+    "archive_sha256": "9b7fdd5424d3d97e47d51dbe23064934585e62135dc2902844dd679529bda929"
+  },
+      "commands": [
+        "colcon build --symlink-install --packages-select patrol turtle_bringup",
+        "ros2 launch turtle_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=reliable record:=false",
+        "timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability reliable --once",
+        "ros2 launch turtle_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=best_effort record:=false",
+        "timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability best_effort --once",
+        "ros2 bag record -s mcap -o evidence/pr05/bag --topics /robot_a/sensor_pose",
+        "ros2 bag play evidence/pr05/bag --qos-profile-overrides-path src/turtle_bringup/config/qos-overrides.yaml",
+        "ros2 bag info evidence/pr05/bag",
+        "python3 .course-kit/v1/tools/check_practice.py PR05 --submission ."
+      ],
+      "tests": [    
+        {"name": "test_validate_params[0.5-0.3-10.0-True]", "status": "passed"},
+        {"name": "test_validate_params[0.5-0.3-0.0-False]", "status": "passed"},
+        {"name": "test_validate_params[nan-0.3-10.0-False]", "status": "passed"},
+        {"name": "test_zero_hz_reason", "status": "passed"},
+        {"name": "test_choose_command_no_pose", "status": "passed"},
+        {"name": "test_choose_command_with_pose", "status": "passed"},
+        {"name": "test_choose_command_respects_parameters", "status": "passed"}
+      ],
+      "defect": {
+        "reproducer": "Запуск launch с subscriber_reliability:=reliable. Нода публикует топик с QoS best_effort. Подписка через ros2 topic echo с reliable QoS завершается по таймауту: топик виден, но сообщений нет.",
+        "root_cause": "Несовместимость QoS в DDS: издатель использует BEST_EFFORT, а подписчик запрашивает RELIABLE. Reliable-подписчик не может подключиться к best_effort-издателю, поэтому сообщения не доставляются.",
+        "proof_after": "Перезапуск с subscriber_reliability:=best_effort. Выравнивание профилей QoS устраняет проблему: ros2 topic echo успешно получает данные. Корректность подтверждена записью и воспроизведением потока через ros2 bag."
+      },
+      "claims": {
+        "public_tests_passed": true,
+        "defect_reproduced": true,
+        "defect_fixed": true,
+        "replay_verified": true
+      },
+      "time": {
+        "contact_academic_hours": 2,
+        "self_study_hours": 2
+      },
+      "ai_used": true
+    }
