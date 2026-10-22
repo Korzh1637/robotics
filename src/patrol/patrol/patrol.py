@@ -1,9 +1,11 @@
+
 import math
 
 import rclpy
 from geometry_msgs.msg import Twist
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from turtlesim_msgs.msg import Pose
 
 from .control import choose_command
@@ -12,8 +14,8 @@ from .control import choose_command
 def validate_params(linear_speed, turn_rate, publish_hz):
     """Чистая функция валидации. Возвращает (ok, reason)"""
     for name, val in [('linear_speed', linear_speed),
-                        ('turn_rate', turn_rate),
-                        ('publish_hz', publish_hz)]:
+                      ('turn_rate', turn_rate),
+                      ('publish_hz', publish_hz)]:
         if not isinstance(val, (int, float)) or math.isnan(float(val)):
             return False, f'{name} is NaN or not a number'
     if not (0.0 <= float(linear_speed) <= 1.0):
@@ -32,17 +34,32 @@ class PatrolNode(Node):
         self.declare_parameter('linear_speed', 0.5)
         self.declare_parameter('turn_rate', 0.3)
         self.declare_parameter('publish_hz', 10.0)
+        self.declare_parameter('subscriber_reliability', 'best_effort')
+
+        rel = self.get_parameter('subscriber_reliability').value
+
+        qos = QoSProfile(
+            reliability=(
+                ReliabilityPolicy.RELIABLE
+                if rel == 'reliable'
+                else ReliabilityPolicy.BEST_EFFORT
+            ),
+            depth=10,
+        )
 
         self._linear_speed = 0.5
         self._turn_rate = 0.3
         self._publish_hz = 10.0
 
         self.last_pose = None
+
         self.pose_sub = self.create_subscription(
-            Pose, '/turtle1/pose', self._on_pose, 10)
+            Pose, '/robot_a/pose', self._on_pose, qos)
+
         self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
 
-        self.timer = self.create_timer(1.0 / self._publish_hz, self._on_timer)
+        self.timer = self.create_timer(
+            1.0 / self._publish_hz, self._on_timer)
 
         self.add_on_set_parameters_callback(self._on_set_parameters)
 
@@ -50,7 +67,11 @@ class PatrolNode(Node):
         self.last_pose = msg
 
     def _on_timer(self):
-        twist = choose_command(self.last_pose, self._linear_speed, self._turn_rate)
+        if self.last_pose is None:
+            return
+
+        twist = choose_command(
+            self.last_pose, self._linear_speed, self._turn_rate)
         self.cmd_pub.publish(twist)
 
     def _on_set_parameters(self, params):
@@ -77,8 +98,10 @@ class PatrolNode(Node):
         if new_hz != self._publish_hz:
             self.timer.cancel()
             self._publish_hz = new_hz
-            self.timer = self.create_timer(1.0 / self._publish_hz, self._on_timer)
-            self.get_logger().info(f'timer rebuilt, period={1.0/self._publish_hz:.4f}s')
+            self.timer = self.create_timer(
+                1.0 / self._publish_hz, self._on_timer)
+            self.get_logger().info(
+                f'timer rebuilt, period={1.0/self._publish_hz:.4f}s')
         else:
             self._publish_hz = new_hz
 

@@ -1,3 +1,4 @@
+
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -15,12 +16,14 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    arg_ns = DeclareLaunchArgument('namespace', default_value='robot_a')
-    arg_record = DeclareLaunchArgument('record', default_value='false')
-    arg_bag_dir = DeclareLaunchArgument('bag_dir',
-                                        default_value='/tmp/pr05_bag')
-    arg_sub_rel = DeclareLaunchArgument('subscriber_reliability',
-                                        default_value='best_effort')
+    arg_ns = DeclareLaunchArgument(
+        'namespace', default_value='robot_a')
+    arg_record = DeclareLaunchArgument(
+        'record', default_value='false')
+    arg_bag_dir = DeclareLaunchArgument(
+        'bag_dir', default_value='/tmp/pr05_bag')
+    arg_sub_rel = DeclareLaunchArgument(
+        'subscriber_reliability', default_value='best_effort')
 
     ns = LaunchConfiguration('namespace')
     record = LaunchConfiguration('record')
@@ -37,20 +40,24 @@ def generate_launch_description():
     patrol_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('patrol'), 'launch', 'patrol.launch.py'
+                FindPackageShare('patrol'),
+                'launch',
+                'patrol.launch.py'
             ])
         ),
-        launch_arguments={'namespace': ns}.items(),
+        launch_arguments={
+            'namespace': ns,
+            'subscriber_reliability': sub_rel,
+        }.items(),
     )
 
     pose_relay_node = Node(
-        package='turtle_bringup', 
+        package='turtle_bringup',
         executable='pose_relay',
         name='pose_relay',
         namespace=ns,
-        parameters=[{'subscriber_reliability': sub_rel}],
         remappings=[
-            ('/turtle1/pose', '/turtle1/pose'),
+            ('/robot_a/pose', '/turtle1/pose'),
         ],
         output='screen',
     )
@@ -60,14 +67,18 @@ def generate_launch_description():
             'ros2', 'bag', 'record',
             '-s', 'mcap',
             '-o', bag_dir,
-            '--topics', '/robot_a/sensor_pose',
+            '--topics',
+            PathJoinSubstitution(['/', ns, 'sensor_pose']),
         ],
         output='screen',
         condition=IfCondition(record),
     )
 
     return LaunchDescription([
-        arg_ns, arg_record, arg_bag_dir, arg_sub_rel,
+        arg_ns,
+        arg_record,
+        arg_bag_dir,
+        arg_sub_rel,
         turtlesim_node,
         patrol_launch,
         pose_relay_node,
