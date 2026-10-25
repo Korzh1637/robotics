@@ -18,6 +18,17 @@ jobs:
     steps:
       # GitVerse запускает JavaScript actions через node внутри job-контейнера.
       # ROS-образ не содержит Node; он нужен и для main, и для post checkout.
+      - name: Определение номера лабораторной работы
+        id : pr
+        shell : bash
+        run : |
+          ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          code=$(echo "$ref" | tr '[:lower:]' '[:upper:]')
+          code_lower=$(echo "$ref" | tr '[:upper:]' '[:lower:]')
+          echo "code=$code"              >> "GITHUB_OUTPUT"
+          echo "code_lower=$code_lower"  >> "GITHUB_OUTPUT"
+          echo "dir=evidence/$ref"       >> "GITHUB_OUTPUT"
+
       - name: Подготовить Node для checkout и его завершающего шага
         shell: bash
         run: |
@@ -26,6 +37,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs
           node --version
           node -e 'if (Number(process.versions.node.split(".")[0]) < 20) process.exit(1)'
+      
       - name: Получить всю историю коммитов
         uses: actions/checkout@v5
         with:
@@ -35,15 +47,15 @@ jobs:
         run: |
           curl -fsSLo course-kit.tar.gz "$COURSE_KIT_URL"
           printf '%s  %s\n' "$COURSE_KIT_SHA256" course-kit.tar.gz | sha256sum -c -
-          mkdir -p .course-kit/pr05
-          tar -xzf course-kit.tar.gz -C .course-kit/pr05
-      - name: Собрать пакеты, запустить тесты и опыт ПР05
+          mkdir -p .course-kit/${{ steps.pr.outputs.code_lower }}
+          tar -xzf course-kit.tar.gz -C .course-kit/${{ steps.pr.outputs.code_lower }}
+      - name: Собрать пакеты, запустить тесты и опыт ${{ steps.pr.outputs.code }}
         shell: bash
         run: |
           source /opt/ros/lyrical/setup.bash
           colcon build --symlink-install --packages-select turtle_bringup patrol
           source install/setup.bash
-          python3 .course-kit/pr05/v1/tools/check_practice.py PR05 --submission .
+          python3 .course-kit/${{ steps.pr.outputs.code_lower }}/v1/tools/check_practice.py ${{ steps.pr.outputs.code }} --submission .
       - name: Проверить версию архива и контракт evidence
         shell: bash
         run: |
@@ -51,8 +63,8 @@ jobs:
           import json
           import os
           from pathlib import Path
-          report = json.loads(Path('evidence/pr05/report.json').read_text())
+          report = json.loads(Path('evidence/${{ steps.pr.outputs.code_lower }}/report.json').read_text())
           assert report['course_kit']['version'] == 'v1-w07'
           assert report['course_kit']['archive_sha256'] == os.environ['COURSE_KIT_SHA256']
           PYTHON
-          python3 .course-kit/pr05/v1/tools/check_practice.py PR05 --submission .
+          python3 .course-kit/${{ steps.pr.outputs.code_lower }}/v1/tools/check_practice.py ${{ steps.pr.outputs.code }} --submission .
