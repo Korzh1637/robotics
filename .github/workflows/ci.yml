@@ -1,4 +1,4 @@
-name: PR05
+name: PR06
 
 on: [push, pull_request]
 
@@ -39,7 +39,7 @@ jobs:
           node -e 'if (Number(process.versions.node.split(".")[0]) < 20) process.exit(1)'
       
       - name: Получить всю историю коммитов
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Скачать зафиксированный комплект курса
