@@ -16,18 +16,18 @@ jobs:
       COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w07-9b7fdd5424d3.tar.gz
       COURSE_KIT_SHA256: 9b7fdd5424d3d97e47d51dbe23064934585e62135dc2902844dd679529bda929
     steps:
-      # GitVerse запускает JavaScript actions через node внутри job-контейнера.
-      # ROS-образ не содержит Node; он нужен и для main, и для post checkout.
       - name: Определение номера лабораторной работы
-        id : pr
-        shell : bash
-        run : |
+        id: pr
+        shell: bash
+        run: |
           ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           code=$(echo "$ref" | tr '[:lower:]' '[:upper:]')
           code_lower=$(echo "$ref" | tr '[:upper:]' '[:lower:]')
-          echo "code=$code"              >> "GITHUB_OUTPUT"
-          echo "code_lower=$code_lower"  >> "GITHUB_OUTPUT"
-          echo "dir=evidence/$ref"       >> "GITHUB_OUTPUT"
+          
+          # ПРАВИЛЬНЫЙ СИНТАКСИС С ЗНАКОМ $ И КАВЫЧКАМИ:
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "code_lower=$code_lower" >> "$GITHUB_OUTPUT"
+          echo "dir=evidence/$ref" >> "$GITHUB_OUTPUT"
 
       - name: Подготовить Node для checkout и его завершающего шага
         shell: bash
